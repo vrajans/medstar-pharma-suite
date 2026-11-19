@@ -14,6 +14,7 @@ import { supabaseBrowser } from "@/lib/supabase";
 import type { StoreCtx } from "@/lib/types";
 import { ScheduleBadge } from "@/components/ScheduleBadge";
 import { Receipt, type ReceiptData } from "./Receipt";
+import { CustomerDialog, DoctorLookup, type PosCustomer } from "./PartyPickers";
 
 export interface PosCtx {
   mode: "demo" | "live";
@@ -26,8 +27,7 @@ export interface PosCtx {
 
 type Unit = "pack" | "base";
 interface CartLine { key: string; product: PosProduct; qty: number; unit: Unit; discountPct: number }
-type PayMode = "cash" | "upi" | "card";
-const PAY_MODES: PayMode[] = ["cash", "upi", "card"];
+type PayMode = "cash" | "upi" | "card" | "credit";
 interface Approval { pharmacistId: string; name: string; regNo: string; approvalId?: string; offline?: boolean }
 
 const todayIST = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -57,9 +57,14 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [autoPrint, setAutoPrint] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [customer, setCustomer] = useState<PosCustomer | null>(null);
+  const [showCustomer, setShowCustomer] = useState(false);
+  const [paidNow, setPaidNow] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const today = todayIST();
   const pharmacistOnDuty = !live || store.onDuty.length > 0;
+  const hasCredit = !!customer && customer.creditLimitPaise > 0;
+  const PAY_MODES = useMemo<PayMode[]>(() => (hasCredit ? ["cash", "upi", "card", "credit"] : ["cash", "upi", "card"]), [hasCredit]);
 
   const flash = useCallback((kind: "ok" | "err" | "warn", text: string) => { setToast({ kind, text }); setTimeout(() => setToast(null), 5000); }, []);
 
@@ -152,7 +157,7 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
   }, [today, flash]);
 
   const reset = () => {
-    setCart([]); setRx({}); setRxFile(null); setApproval(null); setPin(""); setTendered(""); setPayMode("cash");
+    setCart([]); setRx({}); setRxFile(null); setApproval(null); setPin(""); setTendered(""); setPayMode("cash"); setCustomer(null); setPaidNow("");
     searchRef.current?.focus();
   };
 
@@ -191,6 +196,14 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
   const save = useCallback(async () => {
     if (!bill || !canSave) { flash("err", issues.find((i) => i.severity === "block")?.message ?? stockErrors[0]?.error ?? "Nothing to save"); return; }
     if (payMode === "cash" && tendered && Math.round(Number(tendered) * 100) < bill.totalPaise) { flash("err", "Cash tendered is less than the bill total"); return; }
+    const paidNowPaise = payMode === "credit" ? Math.min(bill.totalPaise, Math.max(0, Math.round((Number(paidNow) || 0) * 100))) : 0;
+    const creditPaise = payMode === "credit" ? bill.totalPaise - paidNowPaise : 0;
+    if (creditPaise > 0 && customer && customer.outstandingPaise + creditPaise > customer.creditLimitPaise && navigator.onLine) {
+      flash("err", `Credit limit exceeded: due ${formatINR(customer.outstandingPaise)} + this bill ${formatINR(creditPaise)} > limit ${formatINR(customer.creditLimitPaise)}`); return;
+    }
+    const payments = payMode === "credit"
+      ? [{ mode: "cash" as const, amountPaise: paidNowPaise }, { mode: "credit" as const, amountPaise: creditPaise }].filter((x) => x.amountPaise > 0)
+      : [{ mode: payMode, amountPaise: bill.totalPaise }];
     setBusy(true);
     try {
       const [seq, dev] = await Promise.all([nextLocalSeq(), deviceCode()]);
@@ -200,8 +213,7 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
       const lines = priced.flatMap((p) => p.allocs.map((a) => ({ productId: p.line.product.id, qtyBase: a.qtyBase, batchId: a.batchId, discountPct: p.line.discountPct })));
       const payload = {
         billUuid, storeId: store.id, deviceCode: dev, provisionalNo: prov, billedAt: new Date().toISOString(), offline: !!approval?.offline,
-        billDiscountPct: 0, lines,
-        payments: [{ mode: payMode, amountPaise: bill.totalPaise }],
+        billDiscountPct: 0, lines, payments, customerId: customer?.id,
         prescription: needsRx ? { ...rx, rxDate: rx.rxDate || undefined, rxImagePath } : undefined,
         pharmacistId: needsRx ? approval?.pharmacistId : undefined,
         pharmacistApprovalId: needsRx ? approval?.approvalId : undefined,
@@ -220,7 +232,9 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
 
       const lineMeta = priced.flatMap((p) => p.allocs.map((a) => ({ p, a })));
       setReceipt({
-        number, provisional, at: new Date(), store, orgName: ctx.orgName, bill, paymentMode: payMode,
+        number, provisional, at: new Date(), store, orgName: ctx.orgName, bill,
+        paymentMode: payMode === "credit" ? `credit${paidNowPaise ? ` (paid ${formatINR(paidNowPaise)} cash)` : ""} · due now ${formatINR((customer?.outstandingPaise ?? 0) + creditPaise)}` : payMode,
+        customer: customer ? `${customer.name ?? ""} ${customer.phone}`.trim() : undefined,
         pharmacist: needsRx && approval ? { name: approval.name, regNo: approval.regNo } : null,
         patient: needsRegister ? rx.patientName : undefined,
         prescriber: needsRx && rx.prescriberName ? `${rx.prescriberName}${rx.prescriberRegNo ? ` (${rx.prescriberRegNo})` : ""}` : undefined,
@@ -236,20 +250,21 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
     } finally {
       setBusy(false);
     }
-  }, [bill, canSave, issues, stockErrors, payMode, tendered, priced, needsRx, needsRegister, rx, rxFile, approval, live, store, ctx.orgId, ctx.orgName, autoPrint, flash]);
+  }, [bill, canSave, issues, stockErrors, payMode, tendered, paidNow, customer, priced, needsRx, needsRegister, rx, rxFile, approval, live, store, ctx.orgId, ctx.orgName, autoPrint, flash]);
 
   // ── keyboard-first (UC-POS-13) ──
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "F2") { e.preventDefault(); searchRef.current?.focus(); }
       else if (e.key === "F8") { e.preventDefault(); setPayMode((m) => PAY_MODES[(PAY_MODES.indexOf(m) + 1) % PAY_MODES.length]!); }
+      else if (e.key === "F4") { e.preventDefault(); if (live) setShowCustomer(true); else flash("warn", "Customer accounts need the live database (demo mode)"); }
       else if (e.key === "F10") { e.preventDefault(); void save(); }
       else if (e.ctrlKey && e.key.toLowerCase() === "r") { e.preventDefault(); setShowRx(true); }
       else if (e.key === "Escape") { setShowRx(false); setDutyDialog(false); setQuery(""); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [save]);
+  }, [save, PAY_MODES, live, flash]);
 
   const change = payMode === "cash" && bill && tendered ? Math.round(Number(tendered) * 100) - bill.totalPaise : null;
   const lineAmount = (idx: number, n: number) => {
@@ -263,6 +278,9 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm print:hidden">
         <div className="flex items-center gap-3">
           <strong>{store.code} · {store.name}</strong>
+          <button className="rounded border border-line bg-surface px-2 py-0.5" onClick={() => (live ? setShowCustomer(true) : flash("warn", "Customer accounts need the live database (demo mode)"))}>
+            <kbd>F4</kbd> {customer ? `${customer.name ?? customer.phone}${customer.creditLimitPaise > 0 ? ` · due ${formatINR(customer.outstandingPaise)}` : ""}` : "Walk-in customer"}</button>
+          {customer && <button aria-label="Remove customer" className="text-muted" onClick={() => { setCustomer(null); if (payMode === "credit") setPayMode("cash"); }}>✕</button>}
           {store.onDuty.length > 0 || !live
             ? <span className="text-ok">Pharmacist on duty: {(live ? store.onDuty : [DEMO_PHARMACIST]).map((p) => `${p.name} (${p.regNo})`).join(", ")}</span>
             : <span className="text-danger">No pharmacist on duty — prescription medicines {store.pharmacistPresence === "hard" ? "cannot" : "should not"} be billed</span>}
@@ -403,6 +421,7 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
               <button key={m} role="radio" aria-checked={payMode === m} onClick={() => setPayMode(m)}
                 className={`px-3 py-1 uppercase ${payMode === m ? "bg-brand-700 text-white" : "bg-surface"}`}>{m}</button>))}
           </div>
+          {payMode === "credit" && <input aria-label="Paid now in cash" placeholder="Paid now ₹" value={paidNow} onChange={(e) => setPaidNow(e.target.value)} className="num w-24 rounded border border-line px-2 py-1 text-right" />}
           {payMode === "cash" && <input aria-label="Cash tendered" placeholder="Tendered ₹" value={tendered} onChange={(e) => setTendered(e.target.value)} className="num w-24 rounded border border-line px-2 py-1 text-right" />}
           {change !== null && change >= 0 && <span className="num text-sm">Change {formatINR(change)}</span>}
           <span className="num text-2xl font-semibold">{formatINR(bill?.totalPaise ?? 0)}</span>
@@ -412,10 +431,9 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-4 text-xs text-muted print:hidden">
-        <span><kbd>F2</kbd> search · <kbd>↑↓</kbd> pick · <kbd>Enter</kbd> add · <kbd>F8</kbd> payment mode · <kbd>Ctrl+R</kbd> prescription · <kbd>F10</kbd> save · <kbd>Esc</kbd> close</span>
+        <span><kbd>F2</kbd> search · <kbd>↑↓</kbd> pick · <kbd>Enter</kbd> add · <kbd>F4</kbd> customer · <kbd>F8</kbd> payment mode · <kbd>Ctrl+R</kbd> prescription · <kbd>F10</kbd> save · <kbd>Esc</kbd> close</span>
         <label className="flex items-center gap-1"><input type="checkbox" checked={autoPrint} onChange={(e) => { setAutoPrint(e.target.checked); try { localStorage.setItem("ms_autoprint", e.target.checked ? "1" : "0"); } catch { /* ignore */ } }} /> Print after save</label>
         {receipt && <span>Last bill {receipt.number}{receipt.provisional && " (provisional)"} · {formatINR(receipt.bill.totalPaise)} <button className="underline" onClick={() => window.print()}>Reprint</button></span>}
-        <span className="ml-auto">Credit (udhaar) sales arrive with customer accounts in Sprint 2.</span>
       </div>
 
       {toast && <div role="status" className={`fixed bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-md px-4 py-2 text-white shadow-lg print:hidden ${toast.kind === "ok" ? "bg-ok" : toast.kind === "warn" ? "bg-warn" : "bg-danger"}`}>{toast.text}</div>}
@@ -424,6 +442,7 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
         <div role="dialog" aria-modal="true" aria-label="Prescription details" className="fixed inset-0 z-20 flex items-center justify-center bg-black/30 print:hidden">
           <form className="w-[520px] space-y-2 rounded-lg bg-surface p-4 shadow-xl" onSubmit={(e) => { e.preventDefault(); setShowRx(false); searchRef.current?.focus(); }}>
             <h2 className="font-semibold">Prescription details</h2>
+            {live && <DoctorLookup orgId={ctx.orgId} onPick={(d) => setRx((r) => ({ ...r, prescriberName: d.name + (d.qualification ? `, ${d.qualification}` : ""), prescriberRegNo: d.reg_no ?? "", prescriberAddress: d.address ?? "" }))} />}
             {([
               ["patientName", "Patient name"], ["patientAddress", "Patient address"], ["prescriberName", "Doctor name"],
               ["prescriberRegNo", "Doctor registration no. (e.g. KMC-12345)"], ["prescriberAddress", "Doctor / clinic address"], ["rxDate", "Prescription date"],
@@ -446,6 +465,8 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
         </div>
       )}
 
+      {showCustomer && <CustomerDialog orgId={ctx.orgId} onClose={() => { setShowCustomer(false); searchRef.current?.focus(); }}
+        onPick={(c) => { setCustomer(c); setShowCustomer(false); setRx((r) => ({ ...r, patientName: r.patientName || c.name || "", patientAddress: r.patientAddress || c.address || "" })); searchRef.current?.focus(); }} />}
       {dutyDialog && <DutyDialog pharmacists={ctx.pharmacists} onClose={() => setDutyDialog(false)} onStart={startDuty} />}
       {receipt && <Receipt r={receipt} />}
     </div>

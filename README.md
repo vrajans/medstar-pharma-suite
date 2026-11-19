@@ -36,7 +36,7 @@ pnpm --filter @medstar/web dev
 ```
 1. Open http://localhost:3000 → **Create account** → you land on **Set up your pharmacy** (legal name, PAN, store code, state, GST scheme, GSTIN, address).
 2. **Settings** → add drug licences, register a pharmacist with a 4–6 digit PIN, invite staff (copy the invite link; emails show in Inbucket at http://localhost:54324).
-3. Add products/stock (Sprint 2 brings the product & GRN screens — for now use Supabase Studio at http://localhost:54323 or `post_purchase`).
+3. **Products → Import CSV** (download the template), add distributors under **Purchase**, then load stock with **Inventory → Load opening stock** or **Purchase → New GRN**.
 4. **POS** → *Start duty* (pharmacist PIN) → bill. Online bills post immediately and print the final invoice number; offline bills print a provisional number and sync automatically.
 
 Without `.env.local` the apps run in **demo mode** with sample data.
@@ -45,9 +45,10 @@ Without `.env.local` the apps run in **demo mode** with sample data.
 - **packages/core** — MRP-inclusive GST back-calculation (Nil/5/18 %, CGST/SGST/IGST, composition Bill of Supply), bill round-off, HSN summary, effective-dated rate resolution, GSTIN checksum, FEFO batch allocation with expiry/recall blocking, loose-unit conversion, Schedule H/H1/X/NDPS rules for counter & online, order lifecycle guards, GST-compliant invoice numbering, Zod contracts.
 - **Database** — multi-tenant schema with RLS; `post_sale` (idempotent, FEFO with row locks, compliance checks, H1/X/NDPS register, payments, balanced journal incl. COGS, gap-free invoice no.), `post_purchase` (GRN with free qty, landed cost, distributor licence check, ITC journal), `place_online_order`, `verify_online_rx`, `apply_recall`; triggers that block Rx orders skipping verification and Schedule X/NDPS/habit-forming items on delivery; append-only ledgers; trial balance & GSTR-1 HSN views. All covered by supabase/tests.
 - **Sprint 1** — email/password & magic-link sign-in (Next 16 `proxy.ts` session refresh), pharmacy onboarding, store switcher, role-based navigation, invitations with store scope & discount limits, pharmacist registry with hashed PINs, duty shifts, one-time PIN approvals for Rx bills (5-try lockout), licence/registration expiry alerts, private prescription storage bucket.
+- **Sprint 2** — product master (add/edit, barcodes, Nil-rate GST override, block reason, reorder levels) with CSV import (dry run, all-or-nothing, rename warnings); distributors with GSTIN/licence checks and payables; GRN entry with PTR/free/discount, margin, MRP-change and short-expiry warnings and paper-total cross-check; batch-wise inventory with expiry views; opening-stock CSV import (Dr Inventory / Cr Opening balances); customers with DPDP consent, credit limits (owner/admin only), outstanding and receipts; doctor master; POS customer picker (F4), credit (udhaar) sales with limit checks, doctor lookup in the Rx dialog.
 - **POS screen** — live catalogue (server search + IndexedDB cache for offline), keyboard-first billing with FEFO batches, near-expiry warnings, loose sale, discounts, schedule badges, Rx capture & pharmacist PIN, payment modes, offline outbox with provisional numbers and idempotent sync.
 - **Back-office** — dashboard, online order board (state machine), pharmacist Rx verification queue, compliance hub with H1 register.
 - **Storefront** — catalogue with Rx / store-only flags, cart compliance checks, pincode serviceability, DPDP consent, prescription upload.
 
 ## Next (see docs/05-engineering-plan.md)
-Product/customer/distributor screens, credit (udhaar) sales, GRN screen, returns & credit notes, shifts, GST return exports, payment gateway + WhatsApp Edge Functions, rider PWA, Playwright suite.
+Sales returns & credit notes, expiry returns to distributors, stock adjustments, GRN screen, returns & credit notes, shifts, GST return exports, payment gateway + WhatsApp Edge Functions, rider PWA, Playwright suite.

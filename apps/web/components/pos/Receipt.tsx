@@ -15,6 +15,7 @@ export interface ReceiptData {
   lines: ReceiptLine[];
   bill: BillTotals;
   paymentMode: string;
+  customer?: string;
   pharmacist?: { name: string; regNo: string } | null;
   patient?: string;
   prescriber?: string;
@@ -34,6 +35,7 @@ export function Receipt({ r }: { r: ReceiptData }) {
         {r.bill.documentType === "BILL_OF_SUPPLY" && <div>Composition taxable person, not eligible to collect tax on supplies</div>}
       </div>
       <div className="mt-1 flex justify-between"><span>No: {r.number}</span><span>{formatBillTime(r.at)}</span></div>
+      {r.customer && <div>Customer: {r.customer}</div>}
       {r.patient && <div>Patient: {r.patient}</div>}
       {r.prescriber && <div>Dr: {r.prescriber}</div>}
       <hr className="my-1 border-black" />

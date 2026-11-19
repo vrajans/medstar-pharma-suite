@@ -24,7 +24,7 @@ E1 Platform & auth & tenancy · E2 Product master & import · E3 Inventory & bat
 | Sprint | Goal | Stories (UC refs) |
 |---|---|---|
 | S1 ✅ | Foundations (done 18-Nov-2026: auth, onboarding, roles/invites, pharmacists+PIN+shifts, licence alerts, live POS with offline cache & PIN approvals) | Monorepo, CI, Supabase envs, schema v1, RLS, auth, org/store/user (ORG-01..05), packages/core GST + money |
-| S2 | Masters | Product master + units + HSN tax table (PRD-01..04, 08, 11, GST-01), doctor & customer (CRM-01..03), import CSV |
+| S2 ✅ | Masters + purchase basics (done 19-Nov-2026: product master & CSV import, Nil-rate override, distributors & payables, GRN screen, opening stock import, customers/doctors, credit sales & receipts) | Product master + units + HSN tax table (PRD-01..04, 08, 11, GST-01), doctor & customer (CRM-01..03), import CSV |
 | S3 | Stock & purchase | Distributor master, GRN with batch/free/PTR (PUR-01, 04, 06), stock ledger (INV-01, 02, 09) |
 | S4 | POS v1 | Bill with FEFO, tax, discounts, payments, print (POS-01..04, 07..09, 13, 15) + journal auto-post (ACC-01, 02) |
 | S5 | Compliance & returns | H/H1/X/NDPS capture, registers, pharmacist approval (POS-05, 06, CMP-01..05, 09), returns/cancel (POS-10, 11), purchase returns (PUR-07) |

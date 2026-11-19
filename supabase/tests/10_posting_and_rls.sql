@@ -19,8 +19,8 @@ insert into distributors (id, org_id, name, state_code, drug_licence_no, drug_li
 insert into products (id, org_id, name, composition, hsn, schedule, habit_forming, units_per_pack, pack_label, listed_online) values
  ('00000000-0000-0000-0000-00000000b002', '00000000-0000-0000-0000-000000000001', 'Alprax 0.25 Tablet', 'Alprazolam 0.25mg', '30049099', 'H1', true, 10, 'Strip', true),
  ('00000000-0000-0000-0000-00000000b003', '00000000-0000-0000-0000-000000000001', 'Azithral 500 Tablet', 'Azithromycin 500mg', '30042019', 'H', false, 3, 'Strip', true);
-insert into customers (id, org_id, name, phone, address, auth_user_id) values
- ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-000000000001', 'Meena', '9800000001', 'Indiranagar, Bengaluru', '33333333-3333-3333-3333-333333333333');
+insert into customers (id, org_id, name, phone, address, auth_user_id, credit_limit_paise) values
+ ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-000000000001', 'Meena', '9800000001', 'Indiranagar, Bengaluru', '33333333-3333-3333-3333-333333333333', 50000);
 
 -- act as owner of org 1
 set role authenticated;
