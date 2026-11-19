@@ -2,7 +2,7 @@ import { formatDateIN } from "@medstar/core";
 import { requireArea } from "@/lib/context";
 import { supabaseServer } from "@/lib/supabase-server";
 import { LiveOnly, PageHeader, thCls } from "@/components/ui";
-import { ExportButtons } from "../registers/ExportButtons";
+import { ExportButtons } from "@/components/ExportButtons";
 
 export const metadata = { title: "Controlled-drug reconciliation · MedStar" };
 
