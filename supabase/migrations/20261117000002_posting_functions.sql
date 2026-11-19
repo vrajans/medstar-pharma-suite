@@ -66,11 +66,23 @@ begin
     if v_pharm is null or not exists (select 1 from pharmacists where id = v_pharm and org_id = v_store.org_id) then
       raise exception 'Pharmacist approval required for prescription drugs' using errcode = 'check_violation';
     end if;
+    -- PIN approval (approve_rx_with_pin) is one-time, store-bound and valid for 30 minutes.
+    -- Offline bills cannot reach the server for a PIN check: accepted, but flagged for review.
+    if nullif(p->>'pharmacistApprovalId', '') is not null then
+      update pharmacist_approvals set used_by_bill = (p->>'billUuid')::uuid
+       where id = (p->>'pharmacistApprovalId')::uuid and pharmacist_id = v_pharm and store_id = v_store.id
+         and used_by_bill is null and created_at > now() - interval '30 minutes';
+      if not found then raise exception 'Pharmacist approval is invalid, used or expired — re-enter PIN' using errcode = 'check_violation'; end if;
+    elsif v_offline then
+      v_review := 'Rx approved offline (PIN not verified by server)';
+    else
+      raise exception 'Pharmacist PIN approval required for prescription drugs' using errcode = 'check_violation';
+    end if;
     if not exists (select 1 from pharmacist_shifts where store_id = v_store.id and pharmacist_id = v_pharm and ended_at is null) then
       if v_store.pharmacist_presence = 'hard' and not v_offline then
         raise exception 'Prescription drugs require a registered pharmacist on duty' using errcode = 'check_violation';
       end if;
-      v_review := 'Rx sale without pharmacist shift';
+      v_review := coalesce(v_review || '; ', '') || 'Rx sale without pharmacist shift';
     end if;
   end if;
 

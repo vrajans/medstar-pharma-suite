@@ -9,8 +9,8 @@ insert into memberships (user_id, org_id, role) values
 insert into orgs (id, legal_name) values ('00000000-0000-0000-0000-000000000002', 'Other Pharmacy');
 insert into memberships (user_id, org_id, role) values
  ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000002', 'owner');
-insert into pharmacists (id, org_id, name, council, reg_no) values
- ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-000000000001', 'Dr. A. Rao', 'Karnataka State Pharmacy Council', 'KSPC-4455');
+insert into pharmacists (id, org_id, name, council, reg_no, pin_hash) values
+ ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-000000000001', 'Dr. A. Rao', 'Karnataka State Pharmacy Council', 'KSPC-4455', crypt('1234', gen_salt('bf')));
 insert into pharmacist_shifts (org_id, store_id, pharmacist_id) values
  ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000f1');
 insert into distributors (id, org_id, name, state_code, drug_licence_no, drug_licence_valid_to) values
@@ -73,13 +73,23 @@ do $$ begin
   raise exception 'expected payment mismatch';
 exception when check_violation then null; end $$;
 
--- T-CMP-001: H1 without prescriber reg no is blocked
+-- T-CMP-001: H1 without prescriber reg no is blocked (valid PIN approval supplied, so the register rule is what blocks)
 do $$ begin
-  perform post_sale('{"billUuid":"bbbbbbbb-0000-0000-0000-000000000003","storeId":"00000000-0000-0000-0000-0000000000a1","deviceCode":"POS1","billedAt":"2026-11-17T10:10:00+05:30",
+  perform post_sale(jsonb_set('{"billUuid":"bbbbbbbb-0000-0000-0000-000000000003","storeId":"00000000-0000-0000-0000-0000000000a1","deviceCode":"POS1","billedAt":"2026-11-17T10:10:00+05:30",
     "pharmacistId":"00000000-0000-0000-0000-0000000000f1",
     "prescription":{"prescriberName":"Dr Kumar","patientName":"Meena","patientAddress":"Indiranagar","rxDate":"2026-11-15"},
-    "lines":[{"productId":"00000000-0000-0000-0000-00000000b002","qtyBase":10}],"payments":[{"mode":"upi","amountPaise":2200}]}'::jsonb);
+    "lines":[{"productId":"00000000-0000-0000-0000-00000000b002","qtyBase":10}],"payments":[{"mode":"upi","amountPaise":2200}]}'::jsonb,
+    '{pharmacistApprovalId}', to_jsonb(approve_rx_with_pin('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000f1', '1234')::text)));
   raise exception 'expected H1 block';
+exception when check_violation then
+  if sqlerrm not like 'Schedule H1/X/NDPS%' then raise exception 'wrong rule fired: %', sqlerrm; end if;
+end $$;
+
+-- Rx sale without PIN approval is blocked when online
+do $$ begin
+  perform post_sale('{"billUuid":"bbbbbbbb-0000-0000-0000-000000000006","storeId":"00000000-0000-0000-0000-0000000000a1","deviceCode":"POS1","billedAt":"2026-11-17T10:11:00+05:30",
+    "pharmacistId":"00000000-0000-0000-0000-0000000000f1","lines":[{"productId":"00000000-0000-0000-0000-00000000b003","qtyBase":3}],"payments":[{"mode":"cash","amountPaise":11950}]}'::jsonb);
+  raise exception 'expected PIN approval block';
 exception when check_violation then null; end $$;
 
 -- H drug without pharmacist is blocked
@@ -90,14 +100,16 @@ do $$ begin
 exception when check_violation then null; end $$;
 
 -- T-CMP-002: complete H1 + H bill with 10 % discount on Azithral → register row, wireframe totals
-do $$ declare r jsonb; b sales_bills%rowtype; begin
-  r := post_sale('{"billUuid":"bbbbbbbb-0000-0000-0000-000000000005","storeId":"00000000-0000-0000-0000-0000000000a1","deviceCode":"POS1","billedAt":"2026-11-17T11:00:00+05:30",
+do $$ declare r jsonb; b sales_bills%rowtype; v_appr uuid; begin
+  v_appr := approve_rx_with_pin('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000f1', '1234');
+  assert v_appr is not null, 'PIN approval failed';
+  r := post_sale(jsonb_set('{"billUuid":"bbbbbbbb-0000-0000-0000-000000000005","storeId":"00000000-0000-0000-0000-0000000000a1","deviceCode":"POS1","billedAt":"2026-11-17T11:00:00+05:30",
     "customerId":"00000000-0000-0000-0000-0000000000c1","pharmacistId":"00000000-0000-0000-0000-0000000000f1",
     "prescription":{"prescriberName":"Dr Kumar","prescriberRegNo":"KMC-12345","patientName":"Meena","patientAddress":"Indiranagar","rxDate":"2026-11-15"},
     "lines":[{"productId":"00000000-0000-0000-0000-00000000b001","qtyBase":30},
              {"productId":"00000000-0000-0000-0000-00000000b003","qtyBase":3,"discountPct":10},
              {"productId":"00000000-0000-0000-0000-00000000b002","qtyBase":10}],
-    "payments":[{"mode":"upi","amountPaise":10000},{"mode":"credit","amountPaise":9100}]}'::jsonb);
+    "payments":[{"mode":"upi","amountPaise":10000},{"mode":"credit","amountPaise":9100}]}'::jsonb, '{pharmacistApprovalId}', to_jsonb(v_appr::text)));
   select * into b from sales_bills where id = (r->>'billId')::uuid;
   assert b.total_paise = 19100 and b.round_off_paise = -37 and b.taxable_paise = 18226 and b.cgst_paise = 455 and b.sgst_paise = 456,
     format('wireframe totals mismatch: %s', row_to_json(b));

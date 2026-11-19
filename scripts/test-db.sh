@@ -10,4 +10,4 @@ run() { psql -v ON_ERROR_STOP=1 -q -d "$DB" -f "$1"; }
 run supabase/tests/00_supabase_shim.sql
 for f in supabase/migrations/*.sql; do run "$f"; done
 run supabase/seed.sql
-run supabase/tests/10_posting_and_rls.sql
+for t in supabase/tests/[1-9]*.sql; do run "$t"; done

@@ -1,22 +1,7 @@
-import type { Batch, DrugSchedule } from "@medstar/core";
+import type { Batch } from "@medstar/core";
+import type { PosProduct } from "./catalogue";
+export type { PosProduct } from "./catalogue";
 
-export interface PosProduct {
-  id: string;
-  name: string;
-  composition: string;
-  manufacturer: string;
-  hsn: string;
-  gstRate: number;
-  schedule: DrugSchedule;
-  habitForming?: boolean;
-  coldChain?: boolean;
-  unitsPerPack: number;
-  packLabel: string;
-  baseLabel: string;
-  barcode: string;
-  rack?: string;
-  batches: Batch[];
-}
 
 const b = (id: string, batchNo: string, expiry: string, qtyBase: number, packMrpPaise: number, status: Batch["status"] = "active"): Batch =>
   ({ id, batchNo, expiry, qtyBase, packMrpPaise, status, receivedAt: "2026-06-01" });

@@ -38,6 +38,8 @@ export const PostSaleSchema = z.object({
   payments: z.array(PaymentSchema).min(1),
   prescription: PrescriptionSchema.optional(),
   pharmacistId: z.string().uuid().optional(),
+  /** one-time id from approve_rx_with_pin; omitted for offline bills (server flags them for review) */
+  pharmacistApprovalId: z.string().uuid().optional(),
   onlineOrderId: z.string().uuid().optional(),
   offline: z.boolean().default(false),
 });
