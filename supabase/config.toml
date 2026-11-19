@@ -1,4 +1,5 @@
-# Supabase CLI local development config (supabase start / supabase db reset)
+#:schema https://supabase.com/schemas/config/v1.json
+# Supabase CLI v3 local development config (npx supabase start / npx supabase db reset)
 project_id = "medstar-pharma-suite"
 
 [api]
@@ -23,8 +24,8 @@ enabled = true
 enabled = true
 port = 54323
 
-[inbucket]
-# local email testing UI for sign-up confirmations and magic links: http://localhost:54324
+[local_smtp]
+# local email testing (Mailpit) for sign-up confirmations and magic links: http://localhost:54324
 enabled = true
 port = 54324
 
@@ -41,7 +42,7 @@ enable_signup = true
 minimum_password_length = 10
 
 [auth.email]
-enable_signup = true
+enabled = true
 # keep false locally so you can sign up and onboard immediately; production must confirm emails
 enable_confirmations = false
 

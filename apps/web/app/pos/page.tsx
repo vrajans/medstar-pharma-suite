@@ -17,7 +17,7 @@ export default async function PosPage() {
   return (
     <PosScreen
       key={ctx.store.id}
-      ctx={{ mode: ctx.mode, orgId: ctx.org.orgId, orgName: ctx.org.orgName, store: ctx.store, maxDiscountPct: ctx.org.maxDiscountPct, pharmacists }}
+      ctx={{ mode: ctx.mode, orgId: ctx.org.orgId, orgName: ctx.org.orgName, store: ctx.store, maxDiscountPct: ctx.org.maxDiscountPct, pharmacists, isManager: ["owner", "admin"].includes(ctx.org.role) }}
     />
   );
 }

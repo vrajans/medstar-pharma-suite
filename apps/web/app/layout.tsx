@@ -3,15 +3,17 @@ import Link from "next/link";
 import { getAppContext } from "@/lib/context";
 import { AREA_ROLES } from "@/lib/types";
 import { AccountBar } from "@/components/AccountBar";
+import { ServiceWorker } from "@/components/ServiceWorker";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "MedStar Pharma Suite",
+  applicationName: "MedStar POS",
   description: "Pharmacy POS, inventory, accounting & compliance",
 };
 
 const NAV = [
-  ["/", "Dashboard"], ["/pos", "POS"], ["/orders", "Online orders"], ["/rx-verify", "Rx verification"],
+  ["/", "Dashboard"], ["/pos", "POS"], ["/sales", "Sales"], ["/orders", "Online orders"], ["/rx-verify", "Rx verification"],
   ["/products", "Products"], ["/customers", "Customers"], ["/inventory", "Inventory"], ["/purchase", "Purchase"], ["/accounts", "Accounts"], ["/gst", "GST"],
   ["/compliance", "Compliance"], ["/settings", "Settings"],
 ] as const;
@@ -34,6 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <AccountBar ctx={ctx} />
         </header>
         <main>{children}</main>
+        <ServiceWorker />
       </body>
     </html>
   );

@@ -29,8 +29,8 @@ PGHOST=localhost PGPORT=5432 PGUSER=postgres scripts/test-db.sh
 
 ## Run Sprint 1 locally (live mode)
 ```bash
-supabase start                      # needs Docker; applies migrations + seed
-supabase status                     # copy API URL + anon key
+npx supabase start                  # needs Docker Desktop running; applies migrations + seed
+npx supabase status                 # copy API URL + anon key
 cp .env.example apps/web/.env.local # paste them in
 pnpm --filter @medstar/web dev
 ```
@@ -46,9 +46,11 @@ Without `.env.local` the apps run in **demo mode** with sample data.
 - **Database** — multi-tenant schema with RLS; `post_sale` (idempotent, FEFO with row locks, compliance checks, H1/X/NDPS register, payments, balanced journal incl. COGS, gap-free invoice no.), `post_purchase` (GRN with free qty, landed cost, distributor licence check, ITC journal), `place_online_order`, `verify_online_rx`, `apply_recall`; triggers that block Rx orders skipping verification and Schedule X/NDPS/habit-forming items on delivery; append-only ledgers; trial balance & GSTR-1 HSN views. All covered by supabase/tests.
 - **Sprint 1** — email/password & magic-link sign-in (Next 16 `proxy.ts` session refresh), pharmacy onboarding, store switcher, role-based navigation, invitations with store scope & discount limits, pharmacist registry with hashed PINs, duty shifts, one-time PIN approvals for Rx bills (5-try lockout), licence/registration expiry alerts, private prescription storage bucket.
 - **Sprint 2** — product master (add/edit, barcodes, Nil-rate GST override, block reason, reorder levels) with CSV import (dry run, all-or-nothing, rename warnings); distributors with GSTIN/licence checks and payables; GRN entry with PTR/free/discount, margin, MRP-change and short-expiry warnings and paper-total cross-check; batch-wise inventory with expiry views; opening-stock CSV import (Dr Inventory / Cr Opening balances); customers with DPDP consent, credit limits (owner/admin only), outstanding and receipts; doctor master; POS customer picker (F4), credit (udhaar) sales with limit checks, doctor lookup in the Rx dialog.
+- **Sprint 3** — Sales list & bill view; returns with credit notes (partial/final, restock or damaged, cold-chain never restocked, refund by cash/UPI/card or to the customer's account, H1/X/NDPS register return rows); same-day bill cancellation (owner/admin, or own bill within 30 min); returns to distributors with debit notes at landed cost and input-GST reversal; stock adjustments with owner/admin approval (X/NDPS need a note); recalls that quarantine matching batches and list the customers who bought them.
+- **Sprint 4** — cashier shifts on the POS (open with float, cash in/out, blind close by denomination, X/Z reports, shortage/excess posted to the books); offline app shell (service worker + installable app: the billing screen opens with no internet, even after a restart); silent-printing desktop shortcut (`scripts/windows/create-pos-shortcut.ps1`, see docs/10-counter-setup.md); H1/X/NDPS registers with CSV & print export; controlled-drug stock reconciliation; prescription archive with logged 5-minute image links; audit-log viewer (owner/admin/auditor only).
 - **POS screen** — live catalogue (server search + IndexedDB cache for offline), keyboard-first billing with FEFO batches, near-expiry warnings, loose sale, discounts, schedule badges, Rx capture & pharmacist PIN, payment modes, offline outbox with provisional numbers and idempotent sync.
 - **Back-office** — dashboard, online order board (state machine), pharmacist Rx verification queue, compliance hub with H1 register.
 - **Storefront** — catalogue with Rx / store-only flags, cart compliance checks, pincode serviceability, DPDP consent, prescription upload.
 
 ## Next (see docs/05-engineering-plan.md)
-Sales returns & credit notes, expiry returns to distributors, stock adjustments, GRN screen, returns & credit notes, shifts, GST return exports, payment gateway + WhatsApp Edge Functions, rider PWA, Playwright suite.
+Accounting & GST reports (day book, ledgers, trial balance, P&L, GSTR-1/3B/CMP-08, Tally), GRN screen, returns & credit notes, shifts, GST return exports, payment gateway + WhatsApp Edge Functions, rider PWA, Playwright suite.

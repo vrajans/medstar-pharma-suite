@@ -39,6 +39,7 @@ export const AREA_ROLES: Record<string, Role[]> = {
   "/pos": ["owner", "admin", "pharmacist", "billing"],
   "/orders": ["owner", "admin", "pharmacist", "billing", "rider"],
   "/rx-verify": ["owner", "admin", "pharmacist"],
+  "/sales": ["owner", "admin", "pharmacist", "billing", "accountant", "auditor"],
   "/products": ["owner", "admin", "pharmacist", "purchase", "auditor"],
   "/customers": ["owner", "admin", "pharmacist", "billing", "accountant", "auditor"],
   "/doctors": ["owner", "admin", "pharmacist", "billing", "accountant", "auditor"],

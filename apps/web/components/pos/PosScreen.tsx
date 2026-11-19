@@ -15,6 +15,7 @@ import type { StoreCtx } from "@/lib/types";
 import { ScheduleBadge } from "@/components/ScheduleBadge";
 import { Receipt, type ReceiptData } from "./Receipt";
 import { CustomerDialog, DoctorLookup, type PosCustomer } from "./PartyPickers";
+import { ShiftPanel } from "./ShiftPanel";
 
 export interface PosCtx {
   mode: "demo" | "live";
@@ -23,6 +24,7 @@ export interface PosCtx {
   store: StoreCtx;
   maxDiscountPct: number;
   pharmacists: Array<{ id: string; name: string; regNo: string }>;
+  isManager?: boolean;
 }
 
 type Unit = "pack" | "base";
@@ -60,6 +62,7 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
   const [customer, setCustomer] = useState<PosCustomer | null>(null);
   const [showCustomer, setShowCustomer] = useState(false);
   const [paidNow, setPaidNow] = useState("");
+  const [shiftRefresh, setShiftRefresh] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const today = todayIST();
   const pharmacistOnDuty = !live || store.onDuty.length > 0;
@@ -246,6 +249,7 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
       });
       if (autoPrint) setTimeout(() => window.print(), 100);
       reset();
+      setShiftRefresh((n) => n + 1);
       setSync(await syncOutbox());
     } finally {
       setBusy(false);
@@ -280,6 +284,7 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
           <strong>{store.code} · {store.name}</strong>
           <button className="rounded border border-line bg-surface px-2 py-0.5" onClick={() => (live ? setShowCustomer(true) : flash("warn", "Customer accounts need the live database (demo mode)"))}>
             <kbd>F4</kbd> {customer ? `${customer.name ?? customer.phone}${customer.creditLimitPaise > 0 ? ` · due ${formatINR(customer.outstandingPaise)}` : ""}` : "Walk-in customer"}</button>
+          {live && <ShiftPanel store={store} orgName={ctx.orgName} isManager={!!ctx.isManager} refreshKey={shiftRefresh} onMessage={flash} />}
           {customer && <button aria-label="Remove customer" className="text-muted" onClick={() => { setCustomer(null); if (payMode === "credit") setPayMode("cash"); }}>✕</button>}
           {store.onDuty.length > 0 || !live
             ? <span className="text-ok">Pharmacist on duty: {(live ? store.onDuty : [DEMO_PHARMACIST]).map((p) => `${p.name} (${p.regNo})`).join(", ")}</span>

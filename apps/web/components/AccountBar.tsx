@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { selectStore } from "@/lib/actions";
 import { supabaseBrowser } from "@/lib/supabase";
+import { clearOfflineShell } from "./ServiceWorker";
 import { ROLE_LABEL, type AppCtx } from "@/lib/types";
 
 export function AccountBar({ ctx }: { ctx: AppCtx }) {
@@ -23,7 +24,7 @@ export function AccountBar({ ctx }: { ctx: AppCtx }) {
       <span className="text-brand-100">{ctx.email}</span>
       {ctx.mode === "live" && (
         <button className="rounded px-2 py-1 text-brand-100 hover:bg-brand-700 hover:text-white"
-          onClick={async () => { await supabaseBrowser()?.auth.signOut(); router.replace("/login"); router.refresh(); }}>Sign out</button>
+          onClick={async () => { await supabaseBrowser()?.auth.signOut(); await clearOfflineShell(); router.replace("/login"); router.refresh(); }}>Sign out</button>
       )}
     </div>
   );

@@ -28,6 +28,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   return (
     <div className="mx-auto max-w-6xl p-6">
       <PageHeader title="Inventory" sub={`${ctx.store.code} · ${rows.length} batch(es) · value at cost ${formatINR(value)}`}>
+        <ButtonLink href="/inventory/adjustments">Adjustments</ButtonLink>
+        <ButtonLink href="/inventory/recalls">Recalls</ButtonLink>
+        <ButtonLink href="/purchase/returns">Return to distributor</ButtonLink>
         <ButtonLink href="/inventory/opening">Load opening stock</ButtonLink>
         <ButtonLink href="/purchase/new" primary>New GRN</ButtonLink>
       </PageHeader>
@@ -56,7 +59,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           {!rows.length && <tr><td colSpan={7} className="p-6 text-center text-muted">Nothing here.</td></tr>}</tbody>
         </table>
       </div>
-      <p className="mt-2 text-xs text-muted">Expiry returns to distributors (debit notes) and stock adjustments arrive in Sprint 3.</p>
     </div>
   );
 }
