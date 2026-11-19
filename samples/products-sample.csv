@@ -1,0 +1,16 @@
+name,manufacturer,composition,dosage_form,category,hsn,schedule,rx_required,habit_forming,cold_chain,pack_label,base_unit,units_per_pack,barcode,reorder_level,rack,gst_override,online
+Dolo 650 Tablet,Micro Labs,Paracetamol 650mg,Tablet,OTC,30049099,OTC,N,N,N,Strip,Tab,15,8900000000011,20,A1,,Y
+Crocin Advance Tablet,GSK,Paracetamol 500mg,Tablet,OTC,30049099,OTC,N,N,N,Strip,Tab,15,8900000000028,15,A1,,Y
+Azithral 500 Tablet,Alembic,Azithromycin 500mg,Tablet,Rx,30042019,H,Y,N,N,Strip,Tab,3,8900000000035,10,B3,,Y
+Augmentin 625 Duo Tablet,GSK,Amoxicillin 500mg + Clavulanic acid 125mg,Tablet,Rx,30041020,H,Y,N,N,Strip,Tab,10,8900000000042,8,B3,,Y
+Pan 40 Tablet,Alkem,Pantoprazole 40mg,Tablet,Rx,30049099,H,Y,N,N,Strip,Tab,15,8900000000059,20,B1,,Y
+Telma 40 Tablet,Glenmark,Telmisartan 40mg,Tablet,Rx,30049099,H,Y,N,N,Strip,Tab,15,8900000000066,10,C1,,Y
+Glycomet GP 1 Tablet,USV,Metformin 500mg + Glimepiride 1mg,Tablet,Rx,30049099,H,Y,N,N,Strip,Tab,15,8900000000073,10,C2,,Y
+Alprax 0.25 Tablet,Torrent,Alprazolam 0.25mg,Tablet,Rx,30049099,H1,Y,Y,N,Strip,Tab,10,8900000000080,5,LOCK-1,,N
+Montair LC Tablet,Cipla,Montelukast 10mg + Levocetirizine 5mg,Tablet,Rx,30049099,H,Y,N,N,Strip,Tab,10,8900000000097,10,B2,,Y
+Huminsulin R 40IU/ml Vial,Lilly,Human insulin 40IU/ml,Injection,Rx,30043110,H,Y,N,Y,Vial,Vial,1,8900000000103,4,FRIDGE,,Y
+Imatinib 400 Tablet,Natco,Imatinib 400mg,Tablet,Rx,30049099,H,Y,N,N,Strip,Tab,10,8900000000110,2,C5,0,N
+Benadryl Cough Syrup 150ml,J&J,Diphenhydramine + Ammonium chloride,Syrup,OTC,30049099,OTC,N,N,N,Bottle,Bottle,1,8900000000127,6,D1,,Y
+Volini Gel 30g,Sun Pharma,Diclofenac + Methyl salicylate,Cream,OTC,30049099,OTC,N,N,N,Tube,Tube,1,8900000000134,6,D2,,Y
+Cetaphil Gentle Cleanser 125ml,Galderma,Skin cleanser,Other,Wellness,33049990,OTC,N,N,N,Bottle,Bottle,1,8900000000141,4,E1,,Y
+Dr Morepen BP One Monitor,Morepen,Digital BP monitor,Device,Devices,90189019,OTC,N,N,N,Box,Piece,1,8900000000158,1,E4,,Y
