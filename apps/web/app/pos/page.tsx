@@ -7,17 +7,20 @@ export const metadata = { title: "POS · MedStar" };
 
 export default async function PosPage() {
   const ctx = await requireArea("/pos");
+  let store = ctx.store;
   let pharmacists: PosCtx["pharmacists"] = [{ id: DEMO_PHARMACIST.id, name: DEMO_PHARMACIST.name, regNo: DEMO_PHARMACIST.regNo }];
   if (ctx.mode === "live") {
     const sb = await supabaseServer();
     const today = new Date().toISOString().slice(0, 10);
     const { data } = await sb.from("pharmacists").select("id, name, reg_no, reg_valid_to").eq("org_id", ctx.org.orgId).order("name");
     pharmacists = (data ?? []).filter((p) => !p.reg_valid_to || p.reg_valid_to >= today).map((p) => ({ id: p.id, name: p.name, regNo: p.reg_no }));
+    const lic = await sb.from("licences").select("number, valid_to").eq("store_id", ctx.store.id).ilike("kind", "Form 2%");
+    store = { ...ctx.store, drugLicences: (lic.data ?? []).filter((l) => !l.valid_to || l.valid_to >= today).map((l) => l.number) };
   }
   return (
     <PosScreen
       key={ctx.store.id}
-      ctx={{ mode: ctx.mode, orgId: ctx.org.orgId, orgName: ctx.org.orgName, store: ctx.store, maxDiscountPct: ctx.org.maxDiscountPct, pharmacists, isManager: ["owner", "admin"].includes(ctx.org.role) }}
+      ctx={{ mode: ctx.mode, orgId: ctx.org.orgId, orgName: ctx.org.orgName, store, maxDiscountPct: ctx.org.maxDiscountPct, pharmacists, isManager: ["owner", "admin"].includes(ctx.org.role) }}
     />
   );
 }

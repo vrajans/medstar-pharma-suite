@@ -22,7 +22,7 @@ export interface ReceiptData {
 }
 
 /** 80 mm thermal / A5 bill (UC-POS-01, GST Rule 46 fields). Printed via @media print in globals.css. */
-export function Receipt({ r }: { r: ReceiptData }) {
+export function Receipt({ r, duplicate }: { r: ReceiptData; duplicate?: boolean }) {
   const title = r.bill.documentType === "BILL_OF_SUPPLY" ? "BILL OF SUPPLY" : "TAX INVOICE";
   return (
     <div id="print-receipt" className="hidden print:block font-mono text-[10px] leading-tight text-black">
@@ -30,8 +30,10 @@ export function Receipt({ r }: { r: ReceiptData }) {
         <div className="text-[12px] font-bold">{r.orgName}</div>
         <div>{r.store.name}</div>
         <div>{r.store.address}</div>
+        {r.store.phone && <div>Ph: {r.store.phone}</div>}
         {r.store.gstin && <div>GSTIN: {r.store.gstin}</div>}
-        <div className="mt-1 font-bold">{title}{r.provisional && " (PROVISIONAL)"}</div>
+        {!!r.store.drugLicences?.length && <div>DL No: {r.store.drugLicences.join(", ")}</div>}
+        <div className="mt-1 font-bold">{title}{r.provisional && " (PROVISIONAL)"}{duplicate && " — DUPLICATE"}</div>
         {r.bill.documentType === "BILL_OF_SUPPLY" && <div>Composition taxable person, not eligible to collect tax on supplies</div>}
       </div>
       <div className="mt-1 flex justify-between"><span>No: {r.number}</span><span>{formatBillTime(r.at)}</span></div>

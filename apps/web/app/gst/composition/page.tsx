@@ -27,6 +27,7 @@ export default async function CompositionPage({ searchParams }: { searchParams: 
 
   if (ctx.mode === "demo") return <div className="mx-auto max-w-6xl p-6"><PageHeader title="CMP-08 / GSTR-4" /><GstNav active="/gst/composition" composition={composition} /><LiveOnly what="Composition returns" /></div>;
   const sb = await supabaseServer();
+  const branches = ctx.store.gstin ? ctx.org.stores.filter((x) => x.gstin === ctx.store.gstin).map((x) => x.code) : [ctx.store.code];
   const { data, error } = await sb.rpc("composition_summary", { p_store: ctx.store.id, p_from: range.from, p_to: range.to < today ? range.to : today, p_rate_pct: 1 });
   const c = data as CompositionData | null;
   const m = (v: number) => formatINR(Number(v));
@@ -54,6 +55,7 @@ export default async function CompositionPage({ searchParams }: { searchParams: 
             <Link key={y} href={`/gst/composition?view=gstr4&fy=${y}`} className={`rounded px-2 py-1 ${y === fy ? "bg-canvas font-medium" : "text-muted"}`}>FY {y}-{String((y + 1) % 100).padStart(2, "0")}</Link>))}
       </div>
       {error && <p className="text-danger">{error.message}</p>}
+      {branches.length > 1 && <p className="rounded border border-brand-600 bg-brand-50 p-2 text-sm">One return for GSTIN {ctx.store.gstin}: includes branches <b>{branches.join(", ")}</b>, which share this registration.</p>}
       {c && (
         <>
           <section className="rounded-lg border border-line bg-surface">

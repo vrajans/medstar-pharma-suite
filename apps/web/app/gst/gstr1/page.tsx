@@ -52,6 +52,7 @@ export default async function Gstr1Page({ searchParams }: { searchParams: Promis
       {error && <p className="text-danger">{error.message}</p>}
       {g && (
         <>
+          {(g.stores?.length ?? 0) > 1 && <p className="rounded border border-brand-600 bg-brand-50 p-2 text-sm">One return for GSTIN {g.gstin}: includes branches <b>{g.stores!.join(", ")}</b>, which share this registration.</p>}
           <div className="grid grid-cols-5 gap-3 text-sm">
             {[["Invoices", String(g.totals.invoices)], ["Credit notes", String(g.totals.creditNotes)], ["Taxable value (net)", money(g.totals.txval)],
               ["CGST", money(g.totals.camt)], ["SGST", money(g.totals.samt)]].map(([l, v]) => (

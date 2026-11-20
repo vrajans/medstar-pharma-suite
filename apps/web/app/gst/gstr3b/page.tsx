@@ -17,6 +17,7 @@ export default async function Gstr3bPage({ searchParams }: { searchParams: Promi
   const p = readPeriod(await searchParams, previousMonth());
   if (ctx.mode === "demo") return <div className="mx-auto max-w-6xl p-6"><PageHeader title="GSTR-3B" /><GstNav active="/gst/gstr3b" composition={false} /><LiveOnly what="GSTR-3B" /></div>;
   const sb = await supabaseServer();
+  const branches = ctx.store.gstin ? ctx.org.stores.filter((x) => x.gstin === ctx.store.gstin).map((x) => x.code) : [ctx.store.code];
   const { data, error } = await sb.rpc("gstr3b", { p_store: ctx.store.id, p_from: p.from, p_to: p.to });
   const b = data as Gstr3bData | null;
   // Net ITC can go negative when debit notes (purchase returns) exceed purchases: show it as a reversal (4B) and add it to the liability.
@@ -45,6 +46,7 @@ export default async function Gstr3bPage({ searchParams }: { searchParams: Promi
       <GstNav active="/gst/gstr3b" composition={false} />
       <PeriodForm month={p.month} from={p.from} to={p.to} custom={p.custom} />
       {error && <p className="text-danger">{error.message}</p>}
+      {branches.length > 1 && <p className="rounded border border-brand-600 bg-brand-50 p-2 text-sm">One return for GSTIN {ctx.store.gstin}: includes branches <b>{branches.join(", ")}</b>, which share this registration.</p>}
       {b && s && (
         <>
           {mismatch

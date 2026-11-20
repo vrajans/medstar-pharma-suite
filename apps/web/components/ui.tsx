@@ -6,7 +6,7 @@ export function LiveOnly({ what }: { what: string }) {
     <div className="rounded-lg border border-warn bg-warn/10 p-4 text-sm">
       <p className="font-medium text-warn">{what} needs the live database.</p>
       <p className="mt-1">You&apos;re in demo mode. Start Supabase (<code>supabase start</code>), copy the URL and anon key from <code>supabase status</code> into
-        <code> apps/web/.env.local</code>, restart <code>pnpm --filter @medstar/web dev</code> and sign up. See the README section &quot;Run Sprint 1 locally&quot;.</p>
+        <code> apps/web/.env.local</code>, restart <code>pnpm --filter @medstar/web dev</code> and sign up. See the README section &quot;Run locally (live mode)&quot;.</p>
     </div>
   );
 }

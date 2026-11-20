@@ -24,7 +24,7 @@ export const Amt = ({ paise, muted }: { paise: number; muted?: boolean }) =>
 const SUB = [
   ["/accounts", "Overview"], ["/accounts/vouchers", "Vouchers"], ["/accounts/daybook", "Day book"], ["/accounts/ledger", "Ledgers"],
   ["/accounts/trial-balance", "Trial balance"], ["/accounts/pnl", "Profit & loss"], ["/accounts/balance-sheet", "Balance sheet"],
-  ["/accounts/ledgers", "Chart of accounts"], ["/accounts/period-lock", "Period lock"], ["/accounts/tally", "Tally export"],
+  ["/accounts/ledgers", "Chart of accounts"], ["/accounts/opening", "Opening balances"], ["/accounts/period-lock", "Period lock"], ["/accounts/tally", "Tally export"],
 ] as const;
 
 export function AccountsNav({ active }: { active: string }) {

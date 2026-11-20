@@ -12,6 +12,7 @@ Owner: `accounting-sme` · Sprint 5 · Status: built, **CA review needed before 
 ## GST assumptions — please confirm
 | # | Assumption | Why | Confirm / change |
 |---|---|---|---|
+| 0 | Branches registered under one GSTIN (additional place of business) file ONE return: GSTR-1/3B/CMP-08 combine every store of the organisation with that GSTIN; each branch keeps its own invoice series | One GSTIN = one return | Confirm the Chennai branches' registration |
 | 1 | Place of supply for counter sales = store's state; all sales intra-state (CGST + SGST) | Over-the-counter supply of goods (s.10(1)(c) IGST Act) | Inter-state online deliveries need IGST + B2CL — planned with Sprint 7 |
 | 2 | B2C credit notes are netted into B2CS rate-wise; B2B credit notes go to CDNR | Portal practice for unregistered recipients | |
 | 3 | Nil-rated medicines (product override 0%) go to Table 8 "Nil rated", not "Exempt" | GST 2.0 notified them at Nil rate | |

@@ -27,7 +27,7 @@ cp .env.example apps/web/.env.local       # fill URL + anon key from `supabase s
 PGHOST=localhost PGPORT=5432 PGUSER=postgres scripts/test-db.sh
 ```
 
-## Run Sprint 1 locally (live mode)
+## Run locally (live mode)
 ```bash
 npx supabase start                  # needs Docker Desktop running; applies migrations + seed
 npx supabase status                 # copy API URL + anon key

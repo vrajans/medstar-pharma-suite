@@ -15,6 +15,8 @@ export interface StoreCtx {
   rxValidityDays: number;
   nearExpiryDays: number;
   onDuty: OnDutyPharmacist[];
+  /** Drug licence numbers (Form 20/21…) printed on every bill — D&C Rules r.65 */
+  drugLicences?: string[];
 }
 
 export interface OrgCtx { orgId: string; orgName: string; role: Role; maxDiscountPct: number; stores: StoreCtx[] }

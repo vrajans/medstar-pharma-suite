@@ -4,6 +4,8 @@ import type { Paise } from "./money";
 export interface Gstr1Data {
   gstin: string | null;
   stateCode: string;
+  /** store codes covered — all branches registered under this GSTIN */
+  stores?: string[];
   from: string;
   to: string;
   b2b: Array<{ doc_no: string; doc_date: string; doc_value: Paise; ctin: string; party: string | null; rate: number; txval: Paise; camt: Paise; samt: Paise; iamt: Paise }>;
