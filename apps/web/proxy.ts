@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { SUPABASE_KEY, SUPABASE_URL } from "./lib/env";
 
-const PUBLIC_PATHS = ["/login", "/auth", "/invite"];
+const PUBLIC_PATHS = ["/login", "/auth", "/invite", "/api/health"];
 
 /** Refreshes the Supabase session cookie on every request and sends signed-out users to /login. */
 export async function proxy(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = SUPABASE_URL;
+  const anon = SUPABASE_KEY;
   if (!url || !anon) return NextResponse.next(); // demo mode
 
   let response = NextResponse.next({ request });

@@ -16,6 +16,8 @@ export interface ReceiptData {
   bill: BillTotals;
   paymentMode: string;
   customer?: string;
+  /** mobile for WhatsApp sharing */
+  customerPhone?: string;
   pharmacist?: { name: string; regNo: string } | null;
   patient?: string;
   prescriber?: string;

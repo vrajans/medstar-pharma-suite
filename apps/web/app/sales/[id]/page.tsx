@@ -14,7 +14,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
   if (ctx.mode === "demo") return <div className="mx-auto max-w-5xl p-6"><LiveOnly what="Bill details" /></div>;
   const sb = await supabaseServer();
   const [{ data: bill }, { data: lines }, { data: pays }, { data: rets }, { data: tax }, { data: lic }] = await Promise.all([
-    sb.from("sales_bills").select("*, customers(name, phone), pharmacists(name, reg_no), prescriptions(patient_name, prescriber_name, prescriber_reg_no)").eq("id", id).eq("store_id", ctx.store.id).maybeSingle(),
+    sb.from("sales_bills").select("*, customers(name, phone, gstin, address), pharmacists(name, reg_no), prescriptions(patient_name, prescriber_name, prescriber_reg_no)").eq("id", id).eq("store_id", ctx.store.id).maybeSingle(),
     sb.from("v_bill_lines").select("*").eq("bill_id", id).order("id"),
     sb.from("payments").select("mode, amount_paise, reference, created_at").eq("bill_id", id).order("id"),
     sb.from("sales_returns").select("id, credit_note_no, returned_at, reason, refund_mode, total_paise").eq("bill_id", id).order("returned_at"),
@@ -55,6 +55,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
       roundOffPaise: Number(bill.round_off_paise), totalPaise: Number(bill.total_paise), hsnSummary: [...hsn.values()], documentType: bill.document_type as "TAX_INVOICE" | "BILL_OF_SUPPLY" },
     paymentMode: (pays ?? []).map((p) => p.mode).join(" + ") || "—",
     customer: bill.customers ? `${bill.customers.name ?? ""} ${bill.customers.phone}`.trim() : undefined,
+    customerPhone: bill.customers?.phone ?? undefined,
     pharmacist: bill.pharmacists ? { name: bill.pharmacists.name, regNo: bill.pharmacists.reg_no } : null,
     patient: rx?.patient_name ?? undefined,
     prescriber: rx?.prescriber_name ? `${rx.prescriber_name}${rx.prescriber_reg_no ? ` (${rx.prescriber_reg_no})` : ""}` : undefined,
@@ -64,7 +65,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
     <div className="mx-auto max-w-5xl space-y-4 p-6">
       <PageHeader title={`${bill.document_type === "BILL_OF_SUPPLY" ? "Bill of supply" : "Tax invoice"} ${bill.invoice_no}`}
         sub={`${formatBillTime(new Date(bill.billed_at))} · ${bill.customers ? `${bill.customers.name ?? ""} ${bill.customers.phone}` : "Walk-in"}${bill.pharmacists ? ` · Rx approved by ${bill.pharmacists.name}` : ""}`}>
-        {bill.status === "posted" && <DuplicateBill data={dup} />}
+        {bill.status === "posted" && <DuplicateBill data={dup} buyer={bill.customers ? { name: bill.customers.name, gstin: bill.customers.gstin, address: bill.customers.address, phone: bill.customers.phone } : undefined} />}
         {canCancel && <CancelBill billId={bill.id} />}
       </PageHeader>
       {bill.status === "cancelled" && <p className="rounded border border-danger bg-danger/5 p-2 text-sm text-danger">Cancelled. {bill.review_note}</p>}

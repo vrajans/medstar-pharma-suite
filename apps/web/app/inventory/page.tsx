@@ -28,6 +28,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   return (
     <div className="mx-auto max-w-6xl p-6">
       <PageHeader title="Inventory" sub={`${ctx.store.code} · ${rows.length} batch(es) · value at cost ${formatINR(value)}`}>
+        <ButtonLink href="/inventory/transfers">Branch transfers</ButtonLink>
         <ButtonLink href="/inventory/adjustments">Adjustments</ButtonLink>
         <ButtonLink href="/inventory/recalls">Recalls</ButtonLink>
         <ButtonLink href="/purchase/returns">Return to distributor</ButtonLink>

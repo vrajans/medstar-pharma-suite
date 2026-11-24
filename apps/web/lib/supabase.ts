@@ -1,7 +1,9 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import { SUPABASE_KEY, SUPABASE_URL } from "./env";
+
+const url = SUPABASE_URL;
+const anon = SUPABASE_KEY;
 
 /** True when no Supabase project is configured — screens fall back to demo data. */
 export const DEMO_MODE = !url || !anon;

@@ -14,6 +14,7 @@ import { supabaseBrowser } from "@/lib/supabase";
 import type { StoreCtx } from "@/lib/types";
 import { ScheduleBadge } from "@/components/ScheduleBadge";
 import { Receipt, type ReceiptData } from "./Receipt";
+import { billWhatsAppLink, printA4Invoice } from "./share";
 import { CustomerDialog, DoctorLookup, type PosCustomer } from "./PartyPickers";
 import { ShiftPanel } from "./ShiftPanel";
 
@@ -238,6 +239,7 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
         number, provisional, at: new Date(), store, orgName: ctx.orgName, bill,
         paymentMode: payMode === "credit" ? `credit${paidNowPaise ? ` (paid ${formatINR(paidNowPaise)} cash)` : ""} · due now ${formatINR((customer?.outstandingPaise ?? 0) + creditPaise)}` : payMode,
         customer: customer ? `${customer.name ?? ""} ${customer.phone}`.trim() : undefined,
+        customerPhone: customer?.phone,
         pharmacist: needsRx && approval ? { name: approval.name, regNo: approval.regNo } : null,
         patient: needsRegister ? rx.patientName : undefined,
         prescriber: needsRx && rx.prescriberName ? `${rx.prescriberName}${rx.prescriberRegNo ? ` (${rx.prescriberRegNo})` : ""}` : undefined,
@@ -438,7 +440,7 @@ export function PosScreen({ ctx }: { ctx: PosCtx }) {
       <div className="flex flex-wrap items-center gap-4 text-xs text-muted print:hidden">
         <span><kbd>F2</kbd> search · <kbd>↑↓</kbd> pick · <kbd>Enter</kbd> add · <kbd>F4</kbd> customer · <kbd>F8</kbd> payment mode · <kbd>Ctrl+R</kbd> prescription · <kbd>F10</kbd> save · <kbd>Esc</kbd> close</span>
         <label className="flex items-center gap-1"><input type="checkbox" checked={autoPrint} onChange={(e) => { setAutoPrint(e.target.checked); try { localStorage.setItem("ms_autoprint", e.target.checked ? "1" : "0"); } catch { /* ignore */ } }} /> Print after save</label>
-        {receipt && <span>Last bill {receipt.number}{receipt.provisional && " (provisional)"} · {formatINR(receipt.bill.totalPaise)} <button className="underline" onClick={() => window.print()}>Reprint</button></span>}
+        {receipt && <span>Last bill {receipt.number}{receipt.provisional && " (provisional)"} · {formatINR(receipt.bill.totalPaise)} <button className="underline" onClick={() => window.print()}>Reprint</button>{" · "}<button className="underline" onClick={() => printA4Invoice(receipt)}>A4</button>{receipt.customerPhone && <>{" · "}<a className="underline" href={billWhatsAppLink(receipt, receipt.customerPhone)} target="_blank" rel="noopener">WhatsApp</a></>}</span>}
       </div>
 
       {toast && <div role="status" className={`fixed bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-md px-4 py-2 text-white shadow-lg print:hidden ${toast.kind === "ok" ? "bg-ok" : toast.kind === "warn" ? "bg-warn" : "bg-danger"}`}>{toast.text}</div>}

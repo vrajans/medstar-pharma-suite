@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 const NAV = [
   ["/", "Dashboard"], ["/pos", "POS"], ["/sales", "Sales"], ["/orders", "Online orders"], ["/rx-verify", "Rx verification"],
-  ["/products", "Products"], ["/customers", "Customers"], ["/inventory", "Inventory"], ["/purchase", "Purchase"], ["/accounts", "Accounts"], ["/gst", "GST"],
+  ["/products", "Products"], ["/customers", "Customers"], ["/inventory", "Inventory"], ["/purchase", "Purchase"], ["/reports", "Reports"], ["/accounts", "Accounts"], ["/gst", "GST"],
   ["/compliance", "Compliance"], ["/settings", "Settings"],
 ] as const;
 

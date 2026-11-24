@@ -1,0 +1,33 @@
+name: Deploy database (Supabase production)
+# Applies new migrations in supabase/migrations to the hosted project.
+# Runs after CI passes on main, only when migrations changed, and waits for approval
+# on the "production" environment (Settings → Environments → production → Required reviewers).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: { group: deploy-db, cancel-in-progress: false }
+
+jobs:
+  migrate:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ github.event.workflow_run.head_sha || github.sha }}" }
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+      - name: Show pending migrations
+        run: supabase migration list
+      - name: Apply migrations (never runs seed.sql)
+        run: supabase db push

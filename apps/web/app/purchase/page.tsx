@@ -20,6 +20,7 @@ export default async function PurchasePage() {
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <PageHeader title="Purchase" sub={`Goods receipts for ${ctx.store.code} · distributor balances`}>
         <ButtonLink href="/inventory/opening">Opening stock</ButtonLink>
+        <ButtonLink href="/purchase/shortlist">Short list &amp; orders</ButtonLink>
         <ButtonLink href="/purchase/returns">Returns / debit notes</ButtonLink>
         <ButtonLink href="/purchase/new" primary>New GRN</ButtonLink>
       </PageHeader>

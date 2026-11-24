@@ -1,0 +1,32 @@
+name: Nightly encrypted backup
+# A second copy outside Supabase's own daily backups: pg_dump at 02:30 IST, encrypted with a passphrase
+# only the owner knows, kept as a private workflow artifact for 30 days.
+# Restore: gpg -d medstar-YYYYMMDD.dump.gpg > medstar.dump && pg_restore --no-owner -d <target db url> medstar.dump
+on:
+  schedule: [{ cron: "0 21 * * *" }]
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Install PostgreSQL 17 client
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17
+      - name: Dump and encrypt
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          f="medstar-$(TZ=Asia/Kolkata date +%Y%m%d-%H%M).dump"
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" -Fc --no-owner --no-privileges -n public -n auth -n storage -f "$f"
+          gpg --batch --yes --symmetric --cipher-algo AES256 --passphrase "$PASSPHRASE" -o "$f.gpg" "$f"
+          rm "$f"; ls -lh "$f.gpg"
+          echo "FILE=$f.gpg" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with: { name: "${{ env.FILE }}", path: "${{ env.FILE }}", retention-days: 30 }
